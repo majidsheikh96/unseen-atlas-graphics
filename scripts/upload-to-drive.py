@@ -141,9 +141,9 @@ def main():
         print(f"Auto mode: video slug = {video_slug}")
         video_folder = find_video_folder(drive, video_slug)
         if not video_folder:
-            print(f"FATAL: video folder '{video_slug}' not found in Drive.",
-                  file=sys.stderr)
-            sys.exit(1)
+            # Video folder doesn't exist (fresh start) — create it
+            print(f"Video folder not found, creating: {video_slug}")
+            video_folder = get_or_create_folder(drive, video_slug, VIDEOS_PARENT_ID)
         # One-time: copy shared SFX + Music pools into this video's folder
         print("Syncing shared assets...")
         sync_shared_assets(drive, video_folder)
