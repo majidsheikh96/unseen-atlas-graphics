@@ -1,0 +1,40 @@
+name: Transcribe voiceover
+
+on:
+  push:
+    paths:
+      - 'voiceover/**'
+      - 'scripts/transcribe.py'
+  workflow_dispatch:
+
+jobs:
+  transcribe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install FFmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Install faster-whisper
+        run: pip install --quiet faster-whisper
+
+      - name: Transcribe to SRT
+        env:
+          WHISPER_MODEL: small
+        run: |
+          python3 scripts/transcribe.py voiceover transcripts
+          ls -la transcripts/
+
+      - name: Upload transcripts to Google Drive
+        env:
+          GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
+        run: |
+          pip install --quiet google-api-python-client google-auth
+          python3 scripts/upload-to-drive.py transcripts/
