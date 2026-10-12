@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<!-- STAT CALLOUT (Unseen Atlas) — adapted from HyperFrames catalog mk-progress-stat.
+     Professional documentary data-viz: big count-up numeral, label, thin gold
+     progress track filling in sync, caption. Transparent bg → overlay on footage.
+     TEMPLATE variables: stat_value, stat_suffix, stat_label, stat_caption, stat_max. -->
+<html lang="en" data-composition-variables='[
+  {"id":"stat_value","type":"number","label":"Stat value (count-up target)","default":307},
+  {"id":"stat_suffix","type":"string","label":"Suffix (e.g. %, M)","default":""},
+  {"id":"stat_label","type":"string","label":"Label under number","default":"Endemic plant species"},
+  {"id":"stat_caption","type":"string","label":"Caption line","default":"Nearly a third of Socotra’s flora exists nowhere else on Earth"},
+  {"id":"stat_max","type":"number","label":"Track max (fill = value/max)","default":400}
+]'>
+<head><meta charset="UTF-8">
+<script src="../assets/gsap.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:1920px; height:1080px; overflow:hidden; background:transparent; }
+  #sc-root {
+    --sc-font:"Inter",-apple-system,sans-serif;
+    --sc-ink:#f5f5f7; --sc-dim:#a1a1a6; --sc-accent:#e8b64c;
+    position:relative; width:1920px; height:1080px; overflow:hidden; background:transparent;
+  }
+  #sc-group { position:absolute; font-family:var(--sc-font); text-shadow:0 2px 18px rgba(0,0,0,.55); }
+  #sc-num { font-weight:700; font-size:190px; line-height:1; letter-spacing:-0.03em;
+      color:var(--sc-ink); font-variant-numeric:tabular-nums; }
+  #sc-label { margin-top:10px; font-weight:600; font-size:42px; letter-spacing:-0.01em; color:var(--sc-ink); }
+  #sc-track { position:relative; margin-top:28px; height:6px; border-radius:3px;
+      background:rgba(245,245,247,.18); overflow:hidden; }
+  #sc-fill { position:absolute; inset:0; border-radius:3px; background:var(--sc-accent);
+      transform-origin:left center; box-shadow:0 0 12px rgba(232,182,76,.5); }
+  #sc-caption { margin-top:22px; font-weight:400; font-size:30px; color:var(--sc-dim); max-width:560px; }
+</style>
+</head>
+<body>
+  <div id="sc-root" data-composition-id="stat-callout" data-width="1920" data-height="1080" data-fps="30">
+    <div id="sc-group">
+      <div id="sc-num">0</div>
+      <div id="sc-label"></div>
+      <div id="sc-track"><div id="sc-fill"></div></div>
+      <div id="sc-caption"></div>
+    </div>
+    <div id="sc-drv" class="clip" data-start="0" data-duration="5" data-track-index="0"
+        style="position:absolute;width:1px;height:1px;opacity:0;pointer-events:none"></div>
+  </div>
+<script>
+(function(){
+  "use strict";
+  var DUR = 5;
+  var gv = (window.__hyperframes && window.__hyperframes.getVariables) ? window.__hyperframes.getVariables() : {};
+  var CONFIG = {
+    value: gv.stat_value == null ? 307 : Number(gv.stat_value),
+    suffix: gv.stat_suffix == null ? "" : String(gv.stat_suffix),
+    label: gv.stat_label == null ? "Endemic plant species" : String(gv.stat_label),
+    caption: gv.stat_caption == null ? "" : String(gv.stat_caption),
+    max: gv.stat_max == null ? 400 : Number(gv.stat_max),
+    trackWidth: 480, x: 140, y: 560
+  };
+  var root = document.getElementById("sc-root");
+  var group = document.getElementById("sc-group");
+  var num = document.getElementById("sc-num");
+  var fill = document.getElementById("sc-fill");
+  document.getElementById("sc-label").textContent = CONFIG.label;
+  document.getElementById("sc-caption").textContent = CONFIG.caption;
+  document.getElementById("sc-track").style.width = CONFIG.trackWidth + "px";
+  var rect = group.getBoundingClientRect();
+  group.style.left = CONFIG.x + "px";
+  group.style.top = Math.round(CONFIG.y - rect.height / 2) + "px";
+
+  var tl = gsap.timeline({paused:true});
+  gsap.set(group, {opacity:0, y:28});
+  gsap.set(["#sc-label", "#sc-caption"], {opacity:0});
+  tl.to(group, {opacity:1, y:0, duration:0.7, ease:"power3.out"}, 0.3);
+  var st = {v:0};
+  tl.to(st, {v:CONFIG.value, duration:1.8, ease:"power2.out",
+      onUpdate:function(){ num.textContent = Math.round(st.v) + CONFIG.suffix; }}, 0.5);
+  gsap.set(fill, {scaleX:0});
+  tl.to(fill, {scaleX:Math.min(1, CONFIG.value/CONFIG.max), duration:1.8, ease:"power2.out"}, 0.5);
+  // unit/label lands AFTER the count (documentary formula), caption follows
+  tl.to("#sc-label", {opacity:1, duration:0.5, ease:"power2.out"}, 2.35);
+  tl.to("#sc-caption", {opacity:1, duration:0.5, ease:"power2.out"}, 2.6);
+  tl.to(group, {opacity:0, y:-20, duration:0.4, ease:"power2.in"}, DUR - 0.5);
+  tl.set(root, {visibility:"hidden"}, DUR - 0.02);
+  tl.seek(0);
+  window.__timelines = window.__timelines || {};
+  window.__timelines["stat-callout"] = tl;
+})();
+</script>
+</body>
+</html>
