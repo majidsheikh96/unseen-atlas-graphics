@@ -20,8 +20,10 @@ SCOPES = ["https://www.googleapis.com/auth/drive"]
 CLIENT_ID = "950969484933-umf8vj3nbrte6f5bpo87i4bh464vhb1f.apps.googleusercontent.com"
 CLIENT_SECRET = os.environ.get("GDRIVE_CLIENT_SECRET", "")
 TOKEN_URI = "https://oauth2.googleapis.com/token"
-# Parent folder for all auto-created per-video motion graphics folders
-GRAPHICS_PARENT_ID = "1T93-b-4rLh6H_x6kMgaqG-IYMBOgjm1j"
+# Parent folder containing all per-video folders (Unseen Atlas / videos)
+VIDEOS_PARENT_ID = "12hSLUK2pE20AMdXYAcCCeROSvozF-rMo"
+# Name of the motion graphics subfolder inside each video folder
+GRAPHICS_FOLDER_NAME = "09 - Motion Graphics"
 
 
 def get_or_create_folder(drive, name, parent_id):
@@ -38,7 +40,6 @@ def get_or_create_folder(drive, name, parent_id):
     )
     files = resp.get("files", [])
     if files:
-        print(f"Using existing folder: {name}")
         return files[0]["id"]
     created = (
         drive.files()
@@ -56,6 +57,22 @@ def get_or_create_folder(drive, name, parent_id):
     return created["id"]
 
 
+def find_video_folder(drive, video_slug):
+    """Find the video's own folder by slug. Returns folder ID or None."""
+    resp = (
+        drive.files()
+        .list(
+            q=f"'{VIDEOS_PARENT_ID}' in parents and name contains '{video_slug}' "
+            f"and mimeType='application/vnd.google-apps.folder' and trashed=false",
+            fields="files(id,name)",
+            pageSize=5,
+        )
+        .execute()
+    )
+    files = resp.get("files", [])
+    return files[0]["id"] if files else None
+
+
 def main():
     src_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("renders")
 
@@ -67,15 +84,24 @@ def main():
 
     folder_id = os.environ.get("GDRIVE_FOLDER_ID", "")
     if not folder_id:
-        # Auto mode: read video slug from video-config.json, create/find subfolder
+        # Auto mode: find the video's own folder, create/find its graphics subfolder
         config_path = Path("video-config.json")
         if config_path.exists():
             with open(config_path) as f:
-                video_slug = json.load(f).get("video_slug", "uncategorized")
+                video_slug = json.load(f).get("video_slug", "")
         else:
-            video_slug = "uncategorized"
+            video_slug = ""
+        if not video_slug:
+            print("FATAL: video-config.json missing video_slug and no GDRIVE_FOLDER_ID.",
+                  file=sys.stderr)
+            sys.exit(1)
         print(f"Auto mode: video slug = {video_slug}")
-        folder_id = get_or_create_folder(drive, video_slug, GRAPHICS_PARENT_ID)
+        video_folder = find_video_folder(drive, video_slug)
+        if not video_folder:
+            print(f"FATAL: video folder '{video_slug}' not found in Drive.",
+                  file=sys.stderr)
+            sys.exit(1)
+        folder_id = get_or_create_folder(drive, GRAPHICS_FOLDER_NAME, video_folder)
     print(f"Folder ID: {folder_id}")
 
     creds = Credentials(
