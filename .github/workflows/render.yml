@@ -6,6 +6,7 @@ on:
       - 'compositions/**'
       - 'assets/**'
       - 'render-ci.sh'
+      - 'video-config.json'
   workflow_dispatch:
     inputs:
       mode:
@@ -41,7 +42,6 @@ jobs:
         env:
           GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
           GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
-          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: |
           pip install --quiet google-api-python-client google-auth
           python3 scripts/upload-to-drive.py renders/
