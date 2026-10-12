@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Upload rendered motion graphics to a Google Drive folder.
 
-Uses a service-account JSON key from the GDRIVE_SERVICE_ACCOUNT env var.
+Uses an OAuth refresh token from the GDRIVE_REFRESH_TOKEN env var
+(authenticates as the channel owner — no service-account quota limits).
 If a file with the same name already exists in the folder, it is updated
 in place (no duplicates).
 """
@@ -10,27 +11,25 @@ import os
 import sys
 from pathlib import Path
 
-from google.oauth2 import service_account
+from google.oauth2.credentials import Credentials
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
 
 SCOPES = ["https://www.googleapis.com/auth/drive"]
+# OAuth client for "Unseen Atlas Drive Upload" (Desktop app)
+CLIENT_ID = "950969484933-umf8vj3nbrte6f5bpo87i4bh464vhb1f.apps.googleusercontent.com"
+CLIENT_SECRET = os.environ.get("GDRIVE_CLIENT_SECRET", "")
+TOKEN_URI = "https://oauth2.googleapis.com/token"
 
 
 def main():
     src_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("renders")
 
-    key_raw = os.environ.get("GDRIVE_SERVICE_ACCOUNT", "")
-    if not key_raw:
-        print("FATAL: GDRIVE_SERVICE_ACCOUNT secret is empty or not set.", file=sys.stderr)
+    refresh_token = os.environ.get("GDRIVE_REFRESH_TOKEN", "")
+    if not refresh_token:
+        print("FATAL: GDRIVE_REFRESH_TOKEN secret is empty or not set.", file=sys.stderr)
         sys.exit(1)
-    print(f"Key length: {len(key_raw)} chars")
-    try:
-        key = json.loads(key_raw)
-    except json.JSONDecodeError as e:
-        print(f"FATAL: GDRIVE_SERVICE_ACCOUNT is not valid JSON: {e}", file=sys.stderr)
-        sys.exit(1)
-    print(f"Service account: {key.get('client_email', 'MISSING EMAIL')}")
+    print(f"Refresh token length: {len(refresh_token)} chars")
 
     folder_id = os.environ.get("GDRIVE_FOLDER_ID", "")
     if not folder_id:
@@ -38,8 +37,16 @@ def main():
         sys.exit(1)
     print(f"Folder ID: {folder_id}")
 
-    creds = service_account.Credentials.from_service_account_info(key, scopes=SCOPES)
+    creds = Credentials(
+        token=None,
+        refresh_token=refresh_token,
+        token_uri=TOKEN_URI,
+        client_id=CLIENT_ID,
+        client_secret=CLIENT_SECRET,
+        scopes=SCOPES,
+    )
     drive = build("drive", "v3", credentials=creds)
+    print("Authenticated as channel owner via OAuth.")
 
     # Map existing file names -> ids in the target folder
     existing = {}
