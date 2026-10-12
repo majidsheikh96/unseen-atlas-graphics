@@ -25,3 +25,19 @@ No local rendering needed.
 ## Manual render
 
 Push to `main`, or trigger **Actions → Render motion graphics → Run workflow**.
+Note: edits to `.github/workflows/` do NOT auto-trigger — use **Run workflow**.
+
+## Rules for future videos (do not break)
+
+1. **Binary files (MP3/JPG/PNG) must NEVER be pushed via the GitHub API** — the
+   integration saves them as base64 text, corrupting them. Instead: upload the
+   binary to the Drive assets folder, make it public ("Anyone with the link"),
+   and add a `curl` download line at the top of `render-ci.sh` with a
+   `file ... | grep` integrity check.
+2. **All render logic lives in `render-ci.sh`** — the workflow file
+   (`.github/workflows/render.yml`) is static and cannot be edited via API
+   (GitHub App restriction). Never put video-specific logic in the workflow.
+3. **Node version**: HyperFrames requires Node ≥ 22. If HyperFrames bumps its
+   requirement, update `node-version` in `render.yml` (manual edit via web UI).
+4. **FFmpeg** is installed in the workflow — do not remove that step.
+5. **Hero map** is bespoke per video — render once manually, not in CI.
