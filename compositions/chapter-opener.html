@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<!-- CHAPTER OPENER (calm) — adapted from HyperFrames catalog component titlecard-calm.
+     Restrained premium typography: gold mono kicker + large grotesque headline,
+     fade-up IN, barely-there drift HOLD, clean OUT.
+     TEMPLATE variables: chapter_kicker, chapter_title. -->
+<html lang="en" data-composition-variables='[
+  {"id":"chapter_kicker","type":"string","label":"Kicker (e.g. CHAPTER 1)","default":"CHAPTER 1"},
+  {"id":"chapter_title","type":"string","label":"Chapter title","default":"The Most Alien Place on Earth"}
+]'>
+<head><meta charset="UTF-8">
+<script src="../assets/gsap.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:1920px; height:1080px; overflow:hidden; background:transparent; }
+  #stage { position:relative; width:100%; height:100%; overflow:hidden; background:transparent; }
+  #root {
+    position:absolute; inset:0; overflow:hidden; container-type:size; isolation:isolate;
+    --fg:#f7f7f2; --muted:#e8b64c;
+    --font-display:"Helvetica Neue",Helvetica,Arial,sans-serif;
+    --font-mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+    color:var(--fg); font-family:var(--font-display); pointer-events:none;
+  }
+  .tc-clip { position:absolute; inset:0; display:grid; place-items:center; overflow:hidden; opacity:0; }
+  .tc-lockup { display:flex; width:78cqw; flex-direction:column; align-items:flex-start;
+      gap:6cqh; transform-origin:50% 50%; will-change:transform,opacity; }
+  .tc-kicker { display:block; width:100%; color:var(--muted);
+      font-family:var(--font-mono); font-size:3.2cqmin; font-weight:600; line-height:1;
+      letter-spacing:0.18em; text-transform:uppercase; will-change:transform,opacity; }
+  .tc-headline { display:block; width:100%; color:var(--fg);
+      font-family:var(--font-display); font-size:17cqmin; font-weight:600; line-height:0.94;
+      letter-spacing:-0.055em; overflow-wrap:anywhere; text-wrap:balance;
+      text-shadow:0 4px 30px rgba(0,0,0,.6); will-change:transform,opacity; }
+</style>
+</head>
+<body>
+  <div id="stage" data-composition-id="chapter-opener-calm" data-width="1920" data-height="1080" data-fps="30">
+    <div id="root" data-duration="4">
+      <div id="chapter-calm-clip" class="tc-clip" data-start="0" data-duration="4" data-track-index="0">
+        <div class="tc-lockup" id="tc-lockup">
+          <span class="tc-kicker" id="tc-kicker"></span>
+          <span class="tc-headline" id="tc-headline"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      "use strict";
+      var gv = (window.__hyperframes && window.__hyperframes.getVariables) ? window.__hyperframes.getVariables() : {};
+      var kickerText = gv.chapter_kicker == null ? "CHAPTER 1" : String(gv.chapter_kicker);
+      var headlineText = gv.chapter_title == null ? "The Most Alien Place on Earth" : String(gv.chapter_title);
+      var lockup = document.getElementById("tc-lockup");
+      var kicker = document.getElementById("tc-kicker");
+      var headline = document.getElementById("tc-headline");
+      kicker.textContent = kickerText;
+      headline.textContent = headlineText;
+
+      var IN_BASE = 1.2, OUT_BASE = 0.55, duration = 4;
+      var totalBase = IN_BASE + OUT_BASE;
+      var phaseScale = duration < totalBase ? duration / totalBase : 1;
+      var IN = IN_BASE * phaseScale, OUT = OUT_BASE * phaseScale;
+      var HOLD = Math.max(0, duration - IN - OUT);
+      var HOLD_START = IN, OUT_START = IN + HOLD;
+      var KICKER_IN = 0.5 * phaseScale, HEADLINE_AT = 0.28 * phaseScale, HEADLINE_IN = 0.72 * phaseScale;
+
+      gsap.set(lockup, {opacity:1, y:"0cqh"});
+      var tl = gsap.timeline({paused:true});
+      tl.set("#chapter-calm-clip", {opacity:1}, 0);
+      tl.fromTo(kicker, {opacity:0, y:"2.2cqh"}, {opacity:1, y:"0cqh", duration:KICKER_IN, ease:"power2.out"}, 0);
+      tl.fromTo(headline, {opacity:0, y:"3.2cqh"}, {opacity:1, y:"0cqh", duration:HEADLINE_IN, ease:"power3.out"}, HEADLINE_AT);
+      if (HOLD > 0) { tl.to(lockup, {y:"-0.65cqh", duration:HOLD, ease:"sine.inOut"}, HOLD_START); }
+      tl.to(lockup, {opacity:0, y:"-2.1cqh", duration:OUT, ease:"power2.in"}, OUT_START);
+      tl.to("#chapter-calm-clip", {opacity:0, duration:0.01}, 4);
+      tl.seek(0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["chapter-opener-calm"] = tl;
+    })();
+  </script>
+</body>
+</html>
