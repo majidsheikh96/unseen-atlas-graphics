@@ -1,0 +1,1 @@
+{"name":"unseen-atlas-video-01-graphics","private":true,"scripts":{"check":"npx --yes hyperframes@0.8.149 check","dev":"npx --yes hyperframes@0.8.149 preview","publish":"npx --yes hyperframes@0.8.149 publish","render":"npx --yes hyperframes@0.8.149 render"},"type":"module"}
