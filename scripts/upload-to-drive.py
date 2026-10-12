@@ -19,8 +19,24 @@ SCOPES = ["https://www.googleapis.com/auth/drive"]
 
 def main():
     src_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("renders")
-    key = json.loads(os.environ["GDRIVE_SERVICE_ACCOUNT"])
-    folder_id = os.environ.get("GDRIVE_FOLDER_ID", "1lRhcq9FikEf_P_3XKvZKCdHusnR2BWVB")
+
+    key_raw = os.environ.get("GDRIVE_SERVICE_ACCOUNT", "")
+    if not key_raw:
+        print("FATAL: GDRIVE_SERVICE_ACCOUNT secret is empty or not set.", file=sys.stderr)
+        sys.exit(1)
+    print(f"Key length: {len(key_raw)} chars")
+    try:
+        key = json.loads(key_raw)
+    except json.JSONDecodeError as e:
+        print(f"FATAL: GDRIVE_SERVICE_ACCOUNT is not valid JSON: {e}", file=sys.stderr)
+        sys.exit(1)
+    print(f"Service account: {key.get('client_email', 'MISSING EMAIL')}")
+
+    folder_id = os.environ.get("GDRIVE_FOLDER_ID", "")
+    if not folder_id:
+        print("FATAL: GDRIVE_FOLDER_ID secret is empty or not set.", file=sys.stderr)
+        sys.exit(1)
+    print(f"Folder ID: {folder_id}")
 
     creds = service_account.Credentials.from_service_account_info(key, scopes=SCOPES)
     drive = build("drive", "v3", credentials=creds)
