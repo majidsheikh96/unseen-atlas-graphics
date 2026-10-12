@@ -9,6 +9,13 @@ HF="npx --yes hyperframes@0.8.149 render -q standard --quiet"
 R=compositions
 WEBM="--format webm"
 
+# Download binary assets (pushed as text via API, so fetch correct binaries from Drive)
+mkdir -p assets/audio
+curl -sL "https://drive.google.com/uc?export=download&id=1ZJl2uAhNB0rmxpbDHHvLWJwAIxrZhkA_" -o assets/audio/clean-whoosh.mp3
+curl -sL "https://drive.google.com/uc?export=download&id=1fB2ZklD9qBftHg4nrIBuRlE02EF8ec86" -o assets/audio/mouse-click.mp3
+curl -sL "https://drive.google.com/uc?export=download&id=1R3d5_9nUgsbjZwRlSUVvsiJFmhKN_G1A" -o assets/avatar.jpg
+file assets/audio/clean-whoosh.mp3 | grep -q "MPEG" || { echo "FATAL: whoosh download corrupt"; exit 1; }
+
 # Chapter openers x4
 $HF $WEBM -c $R/chapter-opener.html --variables '{"chapter_kicker":"CHAPTER 1","chapter_title":"The Most Alien Place on Earth"}' -o renders/chapter-1-opener.webm
 $HF $WEBM -c $R/chapter-opener.html --variables '{"chapter_kicker":"CHAPTER 2","chapter_title":"The Tree That Bleeds"}' -o renders/chapter-2-opener.webm
