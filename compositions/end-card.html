@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<!-- TEMPLATE: end card — subscribe CTA + next-video placeholder slot for CapCut overlay.
+     Render via --variables '{"channel_name":"Unseen Atlas","next_label":"NEXT WEEK"}' -->
+<html lang="en" data-composition-variables='[
+  {"id":"channel_name","type":"string","label":"Channel name","default":"Unseen Atlas"},
+  {"id":"next_label","type":"string","label":"Next video label","default":"NEXT WEEK"}
+]'>
+<head><meta charset="UTF-8">
+<script src="../assets/gsap.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:1920px; height:1080px; overflow:hidden; background:#070a0f; }
+  #stage { position:relative; width:100%; height:100%; overflow:hidden; background:#070a0f; }
+  .clip { position:absolute; inset:0; opacity:0; }
+  .bg { background:
+      radial-gradient(ellipse 900px 520px at 50% 120%, rgba(232,182,76,.12), transparent 70%),
+      radial-gradient(ellipse 1200px 760px at 50% -25%, #131c29 0%, #070a0f 62%); }
+  .wrap { display:flex; flex-direction:row; align-items:center; justify-content:center; gap:90px; }
+  .cta { display:flex; flex-direction:column; align-items:flex-start; gap:26px; max-width:760px; }
+  .k { color:#e8b64c; font:700 36px Inter,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:10px; }
+  .big { color:#fff; font:700 96px Inter,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:1px;
+      line-height:1.1; text-shadow:0 6px 40px rgba(0,0,0,.85); }
+  .big .gold { color:#e8b64c; }
+  .sub { color:#9aa4b2; font:400 36px Inter,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:1px;
+      line-height:1.5; }
+  .nextbox { width:560px; height:640px; border:2px dashed rgba(232,182,76,.55); border-radius:22px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:20px;
+      background:rgba(232,182,76,.05); }
+  .nextbox .nl { color:#e8b64c; font:700 40px Inter,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:8px; }
+  .nextbox .nd { color:#9aa4b2; font:400 30px Inter,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:2px;
+      text-align:center; line-height:1.6; padding:0 40px; }
+</style>
+</head>
+<body>
+  <div id="stage" data-composition-id="end-card" data-width="1920" data-height="1080" data-fps="30">
+    <div class="clip bg" id="e-bg" data-start="0" data-duration="8"></div>
+    <div class="clip wrap" id="e-wrap" data-start="0" data-duration="8" style="z-index:10">
+      <div class="cta">
+        <div class="k" id="e-k">THANKS FOR WATCHING</div>
+        <div class="big" id="e-big">Subscribe to<br><span class="gold" id="e-chan">Unseen Atlas</span></div>
+        <div class="sub">Every week, another place<br>that shouldn't exist.</div>
+      </div>
+      <div class="nextbox" id="e-next">
+        <div class="nl" id="e-nl">NEXT VIDEO</div>
+        <div class="nd">Drop the next<br>video thumbnail here<br>in CapCut</div>
+      </div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      var gv = (window.__hyperframes && window.__hyperframes.getVariables) ? window.__hyperframes.getVariables() : {};
+      document.getElementById("e-chan").textContent = gv.channel_name || "Unseen Atlas";
+      document.getElementById("e-nl").textContent = gv.next_label || "NEXT VIDEO";
+      var tl = gsap.timeline({paused:true});
+      tl.set("#e-bg", {opacity:1}, 0);
+      tl.set("#e-wrap", {opacity:1}, 0);
+      tl.fromTo("#e-k", {y:26, opacity:0}, {y:0, opacity:1, duration:0.7, ease:"power3.out"}, 0.4);
+      tl.fromTo("#e-big", {y:40, opacity:0}, {y:0, opacity:1, duration:0.8, ease:"power3.out"}, 0.7);
+      tl.fromTo(".sub", {y:26, opacity:0}, {y:0, opacity:1, duration:0.7, ease:"power3.out"}, 1.1);
+      tl.fromTo("#e-next", {scale:0.94, opacity:0}, {scale:1, opacity:1, duration:0.8, ease:"power3.out"}, 1.3);
+      tl.to("#e-wrap", {opacity:0, duration:0.5, ease:"power1.in"}, 7.4);
+      tl.to("#e-bg", {opacity:0, duration:0.55, ease:"power1.in"}, 7.45);
+      tl.seek(0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["end-card"] = tl;
+    })();
+  </script>
+</body>
+</html>
