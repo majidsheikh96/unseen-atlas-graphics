@@ -1,0 +1,32 @@
+name: Render motion graphics
+
+on:
+  push:
+    paths:
+      - 'compositions/**'
+      - 'assets/**'
+      - 'render-ci.sh'
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Render all motion graphics
+        run: |
+          chmod +x render-ci.sh
+          ./render-ci.sh
+
+      - name: Upload renders to Google Drive
+        env:
+          GDRIVE_SERVICE_ACCOUNT: ${{ secrets.GDRIVE_SERVICE_ACCOUNT }}
+          GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
+        run: |
+          pip install --quiet google-api-python-client google-auth
+          python3 scripts/upload-to-drive.py renders/
