@@ -7,6 +7,15 @@ on:
       - 'assets/**'
       - 'render-ci.sh'
   workflow_dispatch:
+    inputs:
+      mode:
+        description: 'Render mode'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - quick
 
 jobs:
   render:
@@ -22,13 +31,16 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y ffmpeg
 
       - name: Render all motion graphics
+        env:
+          RENDER_MODE: ${{ inputs.mode || 'full' }}
         run: |
           chmod +x render-ci.sh
           ./render-ci.sh
 
       - name: Upload renders to Google Drive
         env:
-          GDRIVE_SERVICE_ACCOUNT: ${{ secrets.GDRIVE_SERVICE_ACCOUNT }}
+          GDRIVE_REFRESH_TOKEN: ${{ secrets.GDRIVE_REFRESH_TOKEN }}
+          GDRIVE_CLIENT_SECRET: ${{ secrets.GDRIVE_CLIENT_SECRET }}
           GDRIVE_FOLDER_ID: ${{ secrets.GDRIVE_FOLDER_ID }}
         run: |
           pip install --quiet google-api-python-client google-auth
