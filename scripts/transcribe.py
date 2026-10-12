@@ -72,10 +72,72 @@ def transcribe_file(model, audio_path: Path, out_dir: Path):
     return srt_path
 
 
+def download_from_drive(drive, folder_id, dest: Path):
+    """Download all MP3s from a Drive folder."""
+    from googleapiclient.http import MediaIoBaseDownload
+    import io
+
+    resp = drive.files().list(
+        q=f"'{folder_id}' in parents and trashed=false",
+        fields="files(id,name)", pageSize=20).execute()
+    for f in resp.get("files", []):
+        if not f["name"].endswith(".mp3"):
+            continue
+        out = dest / f["name"]
+        if out.exists():
+            continue
+        print(f"  downloading {f['name']} from Drive...")
+        req = drive.files().get_media(fileId=f["id"])
+        with open(out, "wb") as fh:
+            dl = MediaIoBaseDownload(fh, req)
+            done = False
+            while not done:
+                _, done = dl.next_chunk()
+        print(f"  saved {out.name}")
+
+
 def main():
     src = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("voiceover")
     out = Path(sys.argv[2]) if len(sys.argv) > 2 else Path("transcripts")
     out.mkdir(parents=True, exist_ok=True)
+    src.mkdir(parents=True, exist_ok=True)
+
+    # If no local MP3s, try downloading from Drive voiceover folder
+    if not list(src.glob("*.mp3")):
+        print("No local MP3s, checking Drive...")
+        try:
+            from google.oauth2.credentials import Credentials
+            from googleapiclient.discovery import build
+            import json as _json
+
+            creds = Credentials(
+                None,
+                refresh_token=os.environ.get("GDRIVE_REFRESH_TOKEN", ""),
+                token_uri="https://oauth2.googleapis.com/token",
+                client_id="950969484933-umf8vj3nbrte6f5bpo87i4bh464vhb1f.apps.googleusercontent.com",
+                client_secret=os.environ.get("GDRIVE_CLIENT_SECRET", ""),
+                scopes=["https://www.googleapis.com/auth/drive"],
+            )
+            drive = build("drive", "v3", credentials=creds)
+            # Find video folder via video-config.json
+            with open("video-config.json") as _f:
+                slug = _json.load(_f).get("video_slug", "")
+            resp = drive.files().list(
+                q=f"'12hSLUK2pE20AMdXYAcCCeROSvozF-rMo' in parents "
+                  f"and name='{slug}' and mimeType='application/vnd.google-apps.folder' "
+                  f"and trashed=false",
+                fields="files(id)", pageSize=2).execute()
+            vf = resp.get("files", [])
+            if vf:
+                vo = drive.files().list(
+                    q=f"'{vf[0]['id']}' in parents and name='voiceover' "
+                      f"and mimeType='application/vnd.google-apps.folder' and trashed=false",
+                    fields="files(id)", pageSize=2).execute()
+                vof = vo.get("files", [])
+                if vof:
+                    download_from_drive(drive, vof[0]["id"], src)
+        except Exception as e:
+            print(f"  Drive download failed: {e}")
 
     from faster_whisper import WhisperModel
 
@@ -84,7 +146,7 @@ def main():
 
     mp3s = sorted(src.glob("*.mp3"))
     if not mp3s:
-        print("No MP3s found in voiceover/.")
+        print("No MP3s found.")
         return
     for mp3 in mp3s:
         transcribe_file(model, mp3, out)
