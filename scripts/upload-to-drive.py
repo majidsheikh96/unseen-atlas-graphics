@@ -73,6 +73,49 @@ def find_video_folder(drive, video_slug):
     return files[0]["id"] if files else None
 
 
+# Shared pools (copied into each video folder once)
+SFX_POOL_ID = "1Gy43O01w6lxB7Mmf-2JJ0xx0eurFZxJH"
+MUSIC_POOL_ID = "1QDwiKY8WsUJgqiLzxMWXW6-ykX0FVOB7"
+
+
+def sync_shared_assets(drive, video_folder_id):
+    """Copy SFX + Music pools into the video folder (once, skips existing)."""
+    for pool_id, sub in [(SFX_POOL_ID, "SFX"), (MUSIC_POOL_ID, "Music")]:
+        dest = get_or_create_folder(drive, sub, video_folder_id)
+        # existing names in destination
+        existing = set()
+        pt = None
+        while True:
+            resp = drive.files().list(
+                q=f"'{dest}' in parents and trashed=false",
+                fields="files(name),nextPageToken", pageToken=pt, pageSize=100,
+            ).execute()
+            existing.update(f["name"] for f in resp.get("files", []))
+            pt = resp.get("nextPageToken")
+            if not pt:
+                break
+        # pool files
+        pt = None
+        copied = 0
+        while True:
+            resp = drive.files().list(
+                q=f"'{pool_id}' in parents and trashed=false",
+                fields="files(id,name),nextPageToken", pageToken=pt, pageSize=100,
+            ).execute()
+            for f in resp.get("files", []):
+                if f["name"] not in existing:
+                    drive.files().copy(
+                        fileId=f["id"],
+                        body={"name": f["name"], "parents": [dest]},
+                        fields="id",
+                    ).execute()
+                    copied += 1
+            pt = resp.get("nextPageToken")
+            if not pt:
+                break
+        print(f"  {sub}: {copied} new file(s) copied")
+
+
 def main():
     src_dir = Path(sys.argv[1]) if len(sys.argv) > 1 else Path("renders")
 
@@ -101,6 +144,9 @@ def main():
             print(f"FATAL: video folder '{video_slug}' not found in Drive.",
                   file=sys.stderr)
             sys.exit(1)
+        # One-time: copy shared SFX + Music pools into this video's folder
+        print("Syncing shared assets...")
+        sync_shared_assets(drive, video_folder)
         folder_id = get_or_create_folder(drive, GRAPHICS_FOLDER_NAME, video_folder)
     print(f"Folder ID: {folder_id}")
 
