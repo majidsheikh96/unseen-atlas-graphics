@@ -1,5 +1,6 @@
 #!/bin/bash
-# CI render script — runs from the repo root (GitHub Actions).
+# CI render script
+# trigger-ci: initial test run — runs from the repo root (GitHub Actions).
 # Transparent overlays -> WebM with alpha (CapCut). Opaque -> MP4.
 set -e
 export TMPDIR="${RUNNER_TEMP:-/tmp}/.hf-tmp"
