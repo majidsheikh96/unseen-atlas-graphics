@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<!-- TEMPLATE: hook title card. Render via --variables '{"series_name":"IMPOSSIBLE PLACES","video_title":"The Island That Shouldn'"'"'t Exist"}' -->
+<html lang="en" data-composition-variables='[
+  {"id":"series_name","type":"string","label":"Series kicker","default":"IMPOSSIBLE PLACES"},
+  {"id":"video_title","type":"string","label":"Video title","default":"The Island That Shouldn&apos;t Exist"}
+]'>
+<head><meta charset="UTF-8">
+<script src="../assets/gsap.min.js"></script>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  html, body { width:1920px; height:1080px; overflow:hidden; background:#070a0f; }
+  #stage { position:relative; width:100%; height:100%; overflow:hidden; background:#070a0f; }
+  .clip { position:absolute; inset:0; opacity:0; }
+  .bg { background:
+      radial-gradient(ellipse 1000px 560px at 50% 118%, rgba(232,182,76,.13), transparent 70%),
+      radial-gradient(ellipse 1300px 800px at 50% -30%, #131c29 0%, #070a0f 62%); }
+  .grain { background:repeating-linear-gradient(0deg, rgba(255,255,255,.012) 0 1px, transparent 1px 3px); }
+  .card { display:flex; flex-direction:column; align-items:center; justify-content:center; gap:34px; }
+  .kicker { color:#e8b64c; font:700 44px Inter,"Segoe UI",Helvetica,Arial,sans-serif; letter-spacing:18px;
+      text-indent:18px; }
+  .rule { width:0px; height:3px; background:#e8b64c; }
+  .title { color:#fff; font:700 118px Georgia,"Times New Roman",serif; letter-spacing:1px;
+      text-align:center; max-width:1600px; line-height:1.18;
+      text-shadow:0 8px 50px rgba(0,0,0,.9); padding:0 60px; }
+</style>
+</head>
+<body>
+  <div id="stage" data-composition-id="title-card" data-width="1920" data-height="1080" data-fps="30">
+    <div class="clip bg" id="h-bg" data-start="0" data-duration="5"></div>
+    <div class="clip grain" id="h-grain" data-start="0" data-duration="5"></div>
+    <div class="clip card" id="h-card" data-start="0" data-duration="5" style="z-index:10">
+      <div class="kicker" id="h-kicker">IMPOSSIBLE PLACES</div>
+      <div class="rule" id="h-rule"></div>
+      <div class="title" id="h-title">The Island That Shouldn't Exist</div>
+    </div>
+  </div>
+  <script>
+    (function(){
+      var gv = (window.__hyperframes && window.__hyperframes.getVariables) ? window.__hyperframes.getVariables() : {};
+      document.getElementById("h-kicker").textContent = gv.series_name || "IMPOSSIBLE PLACES";
+      document.getElementById("h-title").textContent = gv.video_title || "The Island That Shouldn't Exist";
+      var tl = gsap.timeline({paused:true});
+      tl.set("#h-bg", {opacity:1}, 0);
+      tl.set("#h-grain", {opacity:1}, 0);
+      tl.set("#h-card", {opacity:1}, 0);
+      tl.fromTo("#h-kicker", {y:30, opacity:0}, {y:0, opacity:1, duration:0.8, ease:"power3.out"}, 0.4);
+      tl.to("#h-rule", {width:260, duration:0.7, ease:"power2.inOut"}, 0.9);
+      tl.fromTo("#h-title", {y:54, opacity:0}, {y:0, opacity:1, duration:1.0, ease:"power3.out"}, 1.2);
+      tl.fromTo("#h-bg", {scale:1}, {scale:1.06, duration:5, ease:"none"}, 0);
+      tl.to("#h-card", {opacity:0, y:-20, duration:0.5, ease:"power1.in"}, 4.4);
+      tl.to("#h-bg", {opacity:0, duration:0.55, ease:"power1.in"}, 4.45);
+      tl.to("#h-grain", {opacity:0, duration:0.55}, 4.45);
+      tl.seek(0);
+      window.__timelines = window.__timelines || {};
+      window.__timelines["title-card"] = tl;
+    })();
+  </script>
+</body>
+</html>
