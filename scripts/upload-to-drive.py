@@ -20,6 +20,40 @@ SCOPES = ["https://www.googleapis.com/auth/drive"]
 CLIENT_ID = "950969484933-umf8vj3nbrte6f5bpo87i4bh464vhb1f.apps.googleusercontent.com"
 CLIENT_SECRET = os.environ.get("GDRIVE_CLIENT_SECRET", "")
 TOKEN_URI = "https://oauth2.googleapis.com/token"
+# Parent folder for all auto-created per-video motion graphics folders
+GRAPHICS_PARENT_ID = "1T93-b-4rLh6H_x6kMgaqG-IYMBOgjm1j"
+
+
+def get_or_create_folder(drive, name, parent_id):
+    """Find a subfolder by name, or create it. Returns folder ID."""
+    resp = (
+        drive.files()
+        .list(
+            q=f"'{parent_id}' in parents and name='{name}' "
+            f"and mimeType='application/vnd.google-apps.folder' and trashed=false",
+            fields="files(id,name)",
+            pageSize=5,
+        )
+        .execute()
+    )
+    files = resp.get("files", [])
+    if files:
+        print(f"Using existing folder: {name}")
+        return files[0]["id"]
+    created = (
+        drive.files()
+        .create(
+            body={
+                "name": name,
+                "parents": [parent_id],
+                "mimeType": "application/vnd.google-apps.folder",
+            },
+            fields="id",
+        )
+        .execute()
+    )
+    print(f"Created folder: {name}")
+    return created["id"]
 
 
 def main():
@@ -33,8 +67,15 @@ def main():
 
     folder_id = os.environ.get("GDRIVE_FOLDER_ID", "")
     if not folder_id:
-        print("FATAL: GDRIVE_FOLDER_ID secret is empty or not set.", file=sys.stderr)
-        sys.exit(1)
+        # Auto mode: read video slug from video-config.json, create/find subfolder
+        config_path = Path("video-config.json")
+        if config_path.exists():
+            with open(config_path) as f:
+                video_slug = json.load(f).get("video_slug", "uncategorized")
+        else:
+            video_slug = "uncategorized"
+        print(f"Auto mode: video slug = {video_slug}")
+        folder_id = get_or_create_folder(drive, video_slug, GRAPHICS_PARENT_ID)
     print(f"Folder ID: {folder_id}")
 
     creds = Credentials(
